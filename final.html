@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>File Consolidator Pro</title>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#f4f0ff;
+--card:rgba(255,255,255,0.78);
+--card2:rgba(255,255,255,0.55);
+--primary:#7c3aed;
+--primary2:#9333ea;
+--text:#18181b;
+--muted:#71717a;
+--border:rgba(236,231,255,0.85);
+--shadow:0 20px 50px rgba(124,58,237,0.12);
+--panel:rgba(250,250,250,0.72);
+--panel2:rgba(248,245,255,0.85);
+--ring:0 0 0 4px rgba(124,58,237,0.10);
+--toast:#111827;
+}
+[data-theme="dark"]{
+--bg:#0b1020;
+--card:rgba(23,24,39,0.72);
+--card2:rgba(31,34,51,0.52);
+--primary:#a78bfa;
+--primary2:#8b5cf6;
+--text:#f4f4f5;
+--muted:#a1a1aa;
+--border:rgba(42,44,63,0.9);
+--shadow:0 24px 60px rgba(0,0,0,0.40);
+--panel:rgba(31,34,51,0.78);
+--panel2:rgba(35,38,58,0.88);
+--ring:0 0 0 4px rgba(167,139,250,0.18);
+--toast:#0b1220;
+}
+body{
+font-family:'DM Sans',sans-serif;
+background:
+radial-gradient(circle at top left,rgba(167,139,250,0.25) 0%,transparent 28%),
+radial-gradient(circle at bottom right,rgba(196,181,253,0.22) 0%,transparent 28%),
+linear-gradient(180deg,var(--bg),var(--bg));
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:14px;
+color:var(--text);
+}
+.app{width:100%;max-width:1080px}
+.shell{
+display:grid;
+grid-template-columns:260px 1fr;
+gap:16px;
+align-items:stretch;
+}
+.sidebar,.main{
+backdrop-filter:blur(18px);
+-webkit-backdrop-filter:blur(18px);
+border:1px solid var(--border);
+box-shadow:var(--shadow);
+position:relative;
+overflow:hidden;
+}
+.sidebar{
+background:var(--card2);
+border-radius:24px;
+padding:18px;
+}
+.main{
+background:var(--card);
+border-radius:24px;
+padding:20px;
+}
+.sidebar::before,.main::before,.main::after{
+content:"";
+position:absolute;
+border-radius:50%;
+pointer-events:none;
+}
+.sidebar::before{
+top:-120px;right:-120px;width:240px;height:240px;
+background:linear-gradient(135deg,rgba(124,58,237,0.14),rgba(168,85,247,0.06));
+}
+.main::before{
+top:-130px;right:-120px;width:270px;height:270px;
+background:linear-gradient(135deg,rgba(124,58,237,0.16),rgba(168,85,247,0.08));
+}
+.main::after{
+bottom:-130px;left:-120px;width:270px;height:270px;
+background:linear-gradient(135deg,rgba(192,132,252,0.12),rgba(124,58,237,0.05));
+}
+.brand{
+display:flex;
+align-items:center;
+gap:10px;
+margin-bottom:18px;
+position:relative;
+z-index:2;
+}
+.brand-badge{
+width:42px;height:42px;border-radius:14px;
+display:grid;place-items:center;
+background:linear-gradient(135deg,var(--primary),var(--primary2));
+color:#fff;
+box-shadow:0 10px 20px rgba(124,58,237,0.22);
+}
+.brand h2{font-size:16px;font-weight:800;line-height:1.1}
+.brand p{font-size:11px;color:var(--muted);margin-top:2px}
+.topbar{
+display:flex;
+justify-content:flex-end;
+align-items:center;
+margin-bottom:10px;
+position:relative;
+z-index:3;
+}
+.mobile-top{
+display:none;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+margin-bottom:12px;
+position:relative;
+z-index:3;
+}
+.menu-btn,.theme-btn{
+border:none;
+background:var(--panel);
+color:var(--text);
+border:1px solid var(--border);
+border-radius:14px;
+padding:10px 12px;
+cursor:pointer;
+font-size:12px;
+font-weight:700;
+display:flex;
+align-items:center;
+gap:8px;
+transition:.25s;
+}
+.side-actions{
+display:flex;
+flex-direction:column;
+gap:8px;
+position:relative;
+z-index:2;
+}
+.side-btn{
+width:100%;
+border:none;
+background:var(--panel);
+color:var(--text);
+border:1px solid var(--border);
+border-radius:14px;
+padding:11px 12px;
+cursor:pointer;
+font-size:12px;
+font-weight:700;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+transition:.25s;
+}
+.side-btn.primary{
+background:linear-gradient(135deg,var(--primary),var(--primary2));
+color:#fff;
+box-shadow:0 10px 20px rgba(124,58,237,0.25);
+}
+.side-meta{
+margin-top:14px;
+padding:12px;
+border-radius:14px;
+background:var(--panel2);
+border:1px solid var(--border);
+position:relative;
+z-index:2;
+}
+.side-meta .k{font-size:11px;color:var(--muted);margin-bottom:6px}
+.side-meta .v{font-size:13px;font-weight:800;color:var(--text)}
+.header,.section,.stats,.actions,.msg,.log-wrap,.progress-wrap,.preview-panel{position:relative;z-index:2}
+.badge{
+display:inline-block;
+padding:6px 12px;
+border-radius:999px;
+background:var(--panel2);
+color:var(--primary);
+font-size:11px;
+font-weight:700;
+border:1px solid var(--border);
+}
+.header h1{
+font-size:30px;
+line-height:1.1;
+font-weight:800;
+color:var(--text);
+}
+.header p{
+margin-top:8px;
+font-size:13px;
+line-height:1.5;
+color:var(--muted);
+}
+.section{margin-top:12px}
+.label{
+display:block;
+font-size:12px;
+font-weight:700;
+margin-bottom:7px;
+color:var(--text);
+}
+.input-row{display:flex;gap:8px;align-items:stretch}
+.text-input{
+width:100%;
+padding:11px 12px;
+border-radius:12px;
+border:1px solid var(--border);
+background:var(--panel);
+outline:none;
+font-size:12px;
+color:var(--text);
+transition:.25s;
+}
+.text-input:focus{border-color:var(--primary);box-shadow:var(--ring)}
+.text-input[readonly]{color:var(--muted)}
+select.text-input{cursor:pointer}
+.btn{
+border:none;
+padding:11px 14px;
+border-radius:12px;
+cursor:pointer;
+font-size:12px;
+font-weight:700;
+transition:.25s;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:8px;
+white-space:nowrap;
+}
+.btn:hover,.menu-btn:hover,.theme-btn:hover,.side-btn:hover{transform:translateY(-2px)}
+.btn-primary{
+background:linear-gradient(135deg,var(--primary),var(--primary2));
+color:#fff;
+box-shadow:0 10px 20px rgba(124,58,237,0.25);
+}
+.btn-secondary{
+background:var(--panel2);
+color:var(--primary);
+border:1px solid var(--border);
+}
+.btn-outline{
+background:var(--panel);
+border:1px solid var(--border);
+color:var(--text);
+}
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+.stats{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-top:12px;
+}
+.stat{
+background:var(--panel);
+border-radius:14px;
+padding:12px;
+text-align:center;
+border:1px solid var(--border);
+box-shadow:0 5px 15px rgba(0,0,0,0.03);
+}
+.stat-value{
+font-size:20px;
+font-weight:800;
+color:var(--primary);
+}
+.stat-label{
+margin-top:5px;
+font-size:11px;
+color:var(--muted);
+}
+.actions{
+display:flex;
+gap:10px;
+margin-top:12px;
+}
+.actions .btn{flex:1}
+.msg{
+margin-top:12px;
+padding:11px 13px;
+border-radius:12px;
+font-size:12px;
+font-weight:600;
+display:none;
+}
+.success{display:block;background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.20)}
+.warning{display:block;background:rgba(249,115,22,0.12);color:#f97316;border:1px solid rgba(249,115,22,0.20)}
+.log-wrap{
+margin-top:12px;
+background:var(--panel);
+border:1px solid var(--border);
+border-radius:14px;
+padding:11px;
+height:108px;
+overflow:auto;
+font-size:10px;
+font-family:'DM Mono',monospace;
+line-height:1.5;
+color:var(--muted);
+}
+.file-drop{
+border:1px dashed var(--border);
+background:linear-gradient(180deg,var(--panel),rgba(124,58,237,0.03));
+border-radius:16px;
+padding:14px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+transition:.25s;
+cursor:pointer;
+}
+.file-drop.dragover{
+border-color:var(--primary);
+transform:translateY(-1px);
+box-shadow:var(--ring);
+}
+.file-meta{display:flex;flex-direction:column;gap:3px}
+.file-title{font-size:12px;font-weight:700;color:var(--text)}
+.file-sub{font-size:11px;color:var(--muted)}
+.file-dot{
+width:10px;height:10px;border-radius:50%;
+background:var(--primary);
+box-shadow:0 0 0 6px rgba(124,58,237,0.10);
+flex:0 0 auto;
+}
+.file-count{
+margin-top:8px;
+font-size:11px;
+color:var(--muted);
+}
+.spinner{
+width:16px;height:16px;
+border:2px solid rgba(255,255,255,0.35);
+border-top-color:white;
+border-radius:50%;
+animation:spin 0.7s linear infinite;
+display:none;
+}
+@keyframes spin{100%{transform:rotate(360deg)}}
+.progress-wrap{margin-top:12px;display:none}
+.progress-head{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:6px;
+font-size:11px;
+color:var(--muted);
+font-weight:700;
+}
+.progress-bar{
+width:100%;
+height:10px;
+border-radius:999px;
+background:var(--panel);
+border:1px solid var(--border);
+overflow:hidden;
+}
+.progress-fill{
+height:100%;
+width:0%;
+border-radius:999px;
+background:linear-gradient(90deg,var(--primary),var(--primary2));
+transition:width .2s ease;
+}
+.preview-panel{
+margin-top:12px;
+display:none;
+background:var(--panel);
+border:1px solid var(--border);
+border-radius:16px;
+padding:12px;
+backdrop-filter:blur(14px);
+}
+.preview-head{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:8px;
+margin-bottom:10px;
+}
+.preview-head h3{font-size:13px;font-weight:800}
+.preview-list{
+display:grid;
+gap:8px;
+max-height:180px;
+overflow:auto;
+}
+.preview-item{
+display:flex;
+justify-content:space-between;
+gap:10px;
+padding:10px 12px;
+border-radius:12px;
+background:var(--card2);
+border:1px solid var(--border);
+cursor:pointer;
+transition:.2s;
+}
+.preview-item:hover{transform:translateY(-1px);border-color:var(--primary)}
+.preview-item.active{border-color:var(--primary);box-shadow:var(--ring)}
+.preview-name{font-size:12px;font-weight:700}
+.preview-size{font-size:11px;color:var(--muted);margin-top:3px}
+.preview-tag{
+font-size:11px;
+font-weight:700;
+color:var(--primary);
+align-self:center;
+}
+.viewer{
+display:none;
+margin-top:10px;
+border:1px solid var(--border);
+border-radius:14px;
+background:var(--card);
+overflow:hidden;
+}
+.viewer iframe,.viewer img,.viewer pre{
+width:100%;
+display:block;
+border:0;
+}
+.viewer img{max-height:320px;object-fit:contain;background:#111}
+.viewer pre{
+padding:16px;
+font-family:'DM Mono',monospace;
+font-size:11px;
+white-space:pre-wrap;
+color:var(--text);
+background:var(--panel);
+max-height:320px;
+overflow:auto;
+}
+.toast-wrap{
+position:fixed;
+right:16px;
+bottom:16px;
+z-index:9999;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+.toast{
+min-width:220px;
+max-width:320px;
+background:var(--toast);
+color:#fff;
+border:1px solid rgba(255,255,255,0.08);
+padding:12px 14px;
+border-radius:14px;
+box-shadow:0 20px 40px rgba(0,0,0,0.22);
+font-size:12px;
+font-weight:600;
+opacity:0;
+transform:translateY(8px);
+animation:toastIn .25s ease forwards;
+}
+.toast.success{background:#064e3b}
+.toast.warning{background:#7c2d12}
+.toast.info{background:#1f2937}
+@keyframes toastIn{
+to{opacity:1;transform:translateY(0)}
+}
+.copy-btn{min-width:44px;padding:11px 12px}
+@media(max-width:980px){
+.shell{grid-template-columns:1fr}
+.mobile-top{display:flex}
+.sidebar{display:none}
+.sidebar.open{display:block}
+}
+@media(max-width:650px){
+body{padding:10px}
+.main,.sidebar{padding:12px;border-radius:16px}
+.header h1{font-size:22px}
+.grid{grid-template-columns:1fr}
+.stats{grid-template-columns:1fr}
+.actions{flex-direction:column}
+.input-row{flex-direction:column}
+.file-drop{flex-direction:column;align-items:flex-start}
+.toast-wrap{left:10px;right:10px;bottom:10px}
+.toast{min-width:auto;max-width:none}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+<div class="shell">
+
+<div class="sidebar" id="sidebar">
+<div class="brand">
+<div class="brand-badge"><i class="fa-solid fa-layer-group"></i></div>
+<div>
+<h2>File Consolidator</h2>
+<p>Quick actions and status</p>
+</div>
+</div>
+
+<div class="side-actions">
+<button class="side-btn primary" onclick="mergeFiles()"><span><i class="fa-solid fa-wand-magic-sparkles"></i> Consolidate</span><i class="fa-solid fa-arrow-right"></i></button>
+<button class="side-btn" onclick="downloadFile()"><span><i class="fa-solid fa-download"></i> Download</span><i class="fa-solid fa-file-arrow-down"></i></button>
+<button class="side-btn" onclick="viewFile()"><span><i class="fa-solid fa-eye"></i> Preview Output</span><i class="fa-solid fa-up-right-from-square"></i></button>
+<button class="side-btn" onclick="clearAll()"><span><i class="fa-solid fa-rotate-left"></i> Reset</span><i class="fa-solid fa-trash"></i></button>
+<button class="side-btn" onclick="toggleTheme()"><span><i class="fa-solid fa-circle-half-stroke"></i> Theme</span><i class="fa-solid fa-moon"></i></button>
+</div>
+
+<div class="side-meta">
+<div class="k">Destination</div>
+<div class="v" id="sideDest">Not selected</div>
+</div>
+
+<div class="side-meta" style="margin-top:10px">
+<div class="k">Selected files</div>
+<div class="v" id="sideFiles">0 files</div>
+</div>
+
+<div class="side-meta" style="margin-top:10px">
+<div class="k">Total size</div>
+<div class="v" id="sideSize">0 KB</div>
+</div>
+</div>
+
+<div class="main">
+<div class="mobile-top">
+<button class="menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i> Menu</button>
+<button class="theme-btn" onclick="toggleTheme()" id="themeBtnMobile">🌙 Dark</button>
+</div>
+
+<div class="topbar">
+<button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+</div>
+
+<div class="header">
+<h1>File Consolidator</h1>
+<p>Merge, preview, and export multiple files in a polished glass UI.</p>
+</div>
+
+<div class="section">
+<label class="label">Source Folder</label>
+<div class="file-drop" id="dropZone">
+<div class="file-meta">
+<div class="file-title" id="folderNameText">Choose or drop a folder here</div>
+<div class="file-sub">Drag and drop a folder, or browse manually</div>
+</div>
+<div class="file-dot"></div>
+</div>
+<div class="input-row" style="margin-top:8px;">
+<input type="text" class="text-input" id="folderName" readonly placeholder="Choose source folder">
+<button class="btn btn-secondary" onclick="document.getElementById('folder').click()">Browse</button>
+</div>
+<input type="file" id="folder" webkitdirectory multiple hidden>
+<div class="file-count" id="fileCountText">No folder selected</div>
+</div>
+
+<div class="section">
+<label class="label">Destination Folder</label>
+<div class="input-row">
+<input type="text" class="text-input" id="destName" readonly placeholder="Choose destination folder">
+<button class="btn btn-secondary" onclick="pickDestination()">Pick Folder</button>
+<button class="btn btn-outline" onclick="clearDestination()">Clear</button>
+</div>
+</div>
+
+<div class="section">
+<div class="grid">
+<div>
+<label class="label">Output file Name</label>
+<div class="input-row">
+<input type="text" class="text-input" id="output" placeholder="merged">
+<button class="btn btn-outline copy-btn" onclick="copyOutputName()"><i class="fa-regular fa-copy"></i></button>
+</div>
+</div>
+
+<div>
+<label class="label">File Type</label>
+<select class="text-input" id="type">
+<option value="all">All Files</option>
+<option value=".txt">TXT</option>
+<option value=".log">LOG</option>
+<option value=".csv">CSV</option>
+<option value=".json">JSON</option>
+<option value=".js">JS</option>
+<option value=".py">PY</option>
+<option value=".html">HTML</option>
+<option value=".css">CSS</option>
+<option value=".md">MD</option>
+<option value=".png">PNG</option>
+<option value=".jpg">JPG</option>
+<option value=".jpeg">JPEG</option>
+<option value=".gif">GIF</option>
+<option value=".pdf">PDF</option>
+</select>
+</div>
+</div>
+</div>
+
+<div class="stats">
+<div class="stat">
+<div class="stat-value" id="total">0</div>
+<div class="stat-label">Total Files</div>
+</div>
+
+<div class="stat">
+<div class="stat-value" id="matched">0</div>
+<div class="stat-label">Matched</div>
+</div>
+
+<div class="stat">
+<div class="stat-value" id="status">Idle</div>
+<div class="stat-label">Status</div>
+</div>
+</div>
+
+<div class="section">
+<div class="stat" style="text-align:left">
+<div class="stat-label" style="margin-bottom:6px">Total Size</div>
+<div class="stat-value" id="totalSize" style="font-size:16px">0 KB</div>
+</div>
+</div>
+
+<div class="progress-wrap" id="progressWrap">
+<div class="progress-head">
+<span>Processing</span>
+<span id="progressText">0%</span>
+</div>
+<div class="progress-bar">
+<div class="progress-fill" id="progressFill"></div>
+</div>
+</div>
+
+<div class="preview-panel" id="previewPanel">
+<div class="preview-head">
+<h3>Preview before merge</h3>
+<button class="btn btn-outline" onclick="closePreview()">Close</button>
+</div>
+<div class="preview-list" id="previewList"></div>
+<div class="viewer" id="viewer"></div>
+</div>
+
+<div class="actions">
+<button class="btn btn-primary" id="mergeBtn" onclick="mergeFiles()">
+<span id="mergeTxt">Consolidate</span>
+<div class="spinner" id="spinner"></div>
+</button>
+<button class="btn btn-outline" onclick="clearAll()">Reset</button>
+</div>
+
+<div class="msg" id="message"></div>
+<div class="log-wrap" id="log">Waiting for action...</div>
+</div>
+</div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+let files=[];
+let mergedData="";
+let fileName="";
+let dirHandle=null;
+let currentTheme=localStorage.getItem("theme")||"light";
+document.documentElement.setAttribute("data-theme",currentTheme);
+syncThemeButtons();
+
+function syncThemeButtons(){
+let label=currentTheme==="dark"?"☀️ Light":"🌙 Dark";
+document.getElementById("themeBtn").innerText=label;
+document.getElementById("themeBtnMobile").innerText=label;
+}
+
+function toggleTheme(){
+currentTheme=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+document.documentElement.setAttribute("data-theme",currentTheme);
+localStorage.setItem("theme",currentTheme);
+syncThemeButtons();
+toast("Theme switched","info");
+}
+
+function toggleSidebar(){
+document.getElementById("sidebar").classList.toggle("open");
+}
+
+function toast(text,type="info"){
+let wrap=document.getElementById("toastWrap");
+let d=document.createElement("div");
+d.className="toast "+type;
+d.innerText=text;
+wrap.appendChild(d);
+setTimeout(()=>{d.style.opacity="0";d.style.transform="translateY(8px)";setTimeout(()=>d.remove(),250)},2400);
+}
+
+function humanSize(bytes){
+if(!bytes) return "0 KB";
+let units=["B","KB","MB","GB"];
+let i=0,n=bytes;
+while(n>=1024&&i<units.length-1){n/=1024;i++}
+return (i===0?n:n.toFixed(2))+" "+units[i];
+}
+
+function extOf(name){
+let i=name.lastIndexOf(".");
+return i>=0?name.slice(i).toLowerCase():"";
+}
+
+async function setFilesFromList(list){
+files=[...list];
+if(files.length>0){
+let folder=files[0].webkitRelativePath?files[0].webkitRelativePath.split("/")[0]:"Selected Folder";
+document.getElementById("folderName").value=folder;
+document.getElementById("folderNameText").innerText=folder;
+document.getElementById("fileCountText").innerText=files.length+" file(s) ready";
+document.getElementById("total").innerText=files.length;
+let totalBytes=files.reduce((s,f)=>s+f.size,0);
+let sizeTxt=humanSize(totalBytes);
+document.getElementById("totalSize").innerText=sizeTxt;
+document.getElementById("sideFiles").innerText=files.length+" files";
+document.getElementById("sideSize").innerText=sizeTxt;
+toast(files.length+" files loaded","success");
+log("Folder selected — "+files.length+" file(s)");
+buildPreviewList();
+}
+}
+
+document.getElementById("folder").addEventListener("change",(e)=>setFilesFromList(e.target.files));
+
+const dropZone=document.getElementById("dropZone");
+dropZone.addEventListener("click",()=>document.getElementById("folder").click());
+dropZone.addEventListener("dragover",(e)=>{e.preventDefault();dropZone.classList.add("dragover")});
+dropZone.addEventListener("dragleave",()=>dropZone.classList.remove("dragover"));
+dropZone.addEventListener("drop",(e)=>{
+e.preventDefault();
+dropZone.classList.remove("dragover");
+let dt=e.dataTransfer;
+let items=[...dt.items||[]];
+if(items.length&&items[0].webkitGetAsEntry){
+let entry=items[0].webkitGetAsEntry();
+if(entry&&entry.isDirectory){
+readDirectoryEntry(entry).then(setFilesFromList).catch(()=>toast("Could not read folder","warning"));
+return;
+}
+}
+if(dt.files&&dt.files.length) setFilesFromList(dt.files);
+});
+
+async function readDirectoryEntry(entry){
+let out=[];
+async function walk(dir){
+const reader=dir.createReader();
+let batch;
+do{
+batch=await new Promise(resolve=>reader.readEntries(resolve));
+for(const ent of batch){
+if(ent.isFile){
+let file=await new Promise(resolve=>ent.file(resolve));
+file.webkitRelativePath=file.webkitRelativePath||file.name;
+out.push(file);
+}else if(ent.isDirectory){
+await walk(ent);
+}
+}
+}while(batch.length);
+}
+await walk(entry);
+return out;
+}
+
+async function pickDestination(){
+try{
+dirHandle=await window.showDirectoryPicker({mode:"readwrite"});
+document.getElementById("destName").value=dirHandle.name;
+document.getElementById("sideDest").innerText=dirHandle.name;
+toast("Destination selected","success");
+showMessage("Destination folder selected","success");
+}catch(err){
+toast("Selection cancelled","warning");
+showMessage("Selection cancelled","warning");
+}
+}
+
+function clearDestination(){
+dirHandle=null;
+document.getElementById("destName").value="";
+document.getElementById("sideDest").innerText="Not selected";
+toast("Destination cleared","info");
+showMessage("Destination cleared","warning");
+}
+
+function buildPreviewList(){
+let panel=document.getElementById("previewPanel");
+let list=document.getElementById("previewList");
+list.innerHTML="";
+files.forEach((f)=>{
+let item=document.createElement("div");
+item.className="preview-item";
+item.onclick=()=>previewFile(f,item);
+item.innerHTML=`<div><div class="preview-name">${f.name}</div><div class="preview-size">${humanSize(f.size)}</div></div><div class="preview-tag">${extOf(f.name)||"FILE"}</div>`;
+list.appendChild(item);
+});
+panel.style.display=files.length?"block":"none";
+}
+
+async function previewFile(file,selectedEl){
+document.querySelectorAll(".preview-item").forEach(x=>x.classList.remove("active"));
+if(selectedEl) selectedEl.classList.add("active");
+let viewer=document.getElementById("viewer");
+let ext=extOf(file.name);
+viewer.style.display="block";
+if([".png",".jpg",".jpeg",".gif",".webp"].includes(ext)){
+let url=URL.createObjectURL(file);
+viewer.innerHTML=`<img src="${url}" alt="${file.name}">`;
+setTimeout(()=>URL.revokeObjectURL(url),2000);
+return;
+}
+if(ext===".pdf"){
+let url=URL.createObjectURL(file);
+viewer.innerHTML=`<iframe src="${url}" style="height:320px"></iframe>`;
+return;
+}
+let text=await file.text();
+viewer.innerHTML=`<pre>${escapeHtml(text.slice(0,12000))}</pre>`;
+}
+
+function closePreview(){
+document.getElementById("previewPanel").style.display="none";
+document.getElementById("viewer").style.display="none";
+document.getElementById("viewer").innerHTML="";
+}
+
+async function saveToDestination(){
+try{
+if(!dirHandle) return false;
+let fh=await dirHandle.getFileHandle(fileName,{create:true});
+let w=await fh.createWritable();
+await w.write(mergedData);
+await w.close();
+return true;
+}catch(e){
+return false;
+}
+}
+
+function setProgress(p){
+document.getElementById("progressWrap").style.display="block";
+document.getElementById("progressFill").style.width=p+"%";
+document.getElementById("progressText").innerText=Math.round(p)+"%";
+}
+
+async function mergeFiles(){
+if(files.length===0){
+toast("Select a source folder first","warning");
+showMessage("Select source folder first","warning");
+return;
+}
+
+let type=document.getElementById("type").value;
+let output=document.getElementById("output").value.trim()||"merged";
+
+let matchedFiles=files.filter(file=>{
+let ext=extOf(file.name);
+return type==="all"||type===ext;
+});
+
+if(matchedFiles.length===0){
+mergedData="";
+fileName="";
+document.getElementById("matched").innerText="0";
+document.getElementById("status").innerText="No files";
+document.getElementById("progressWrap").style.display="none";
+document.getElementById("resultRow")?.style && (document.getElementById("resultRow").style.display="none");
+toast("No file found for selected type","warning");
+showMessage("No file found for selected type","warning");
+return;
+}
+
+fileName=output+".txt";
+mergedData="";
+
+setLoading(true);
+document.getElementById("status").innerText="...";
+clearLog();
+document.getElementById("progressWrap").style.display="block";
+setProgress(0);
+
+let matched=0;
+
+for(let i=0;i<matchedFiles.length;i++){
+let file=matchedFiles[i];
+try{
+mergedData+=await file.text()+"\n\n";
+matched++;
+log("✓ "+file.name);
+}catch(e){
+log("✗ "+file.name);
+}
+setProgress(((i+1)/matchedFiles.length)*100);
+}
+
+setLoading(false);
+document.getElementById("status").innerText="Done";
+document.getElementById("matched").innerText=matched;
+toast("Merge completed","success");
+showMessage("Merge completed","success");
+
+if(dirHandle){
+let ok=await saveToDestination();
+if(ok){
+toast("Saved successfully","success");
+showMessage("Saved successfully","success");
+}else{
+toast("Use Download button","warning");
+showMessage("Use Download button","warning");
+}
+}else{
+toast("No destination selected","warning");
+showMessage("No destination selected","warning");
+}
+}
+
+function downloadFile(){
+if(!mergedData) return;
+let a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([mergedData],{type:"text/plain"}));
+a.download=fileName;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(a.href);
+toast("Downloaded successfully","success");
+showMessage("Downloaded successfully","success");
+}
+
+function viewFile(){
+if(!mergedData) return;
+let w=window.open();
+w.document.write(`<pre style="padding:20px;font-family:monospace;white-space:pre-wrap;">${escapeHtml(mergedData)}</pre>`);
+}
+
+function copyOutputName(){
+let text=(document.getElementById("output").value.trim()||"merged")+".txt";
+navigator.clipboard.writeText(text).then(()=>{
+toast("Output name copied","success");
+showMessage("Output name copied","success");
+}).catch(()=>toast("Copy failed","warning"));
+}
+
+function escapeHtml(s){
+return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function clearAll(){
+files=[];
+mergedData="";
+fileName="";
+dirHandle=null;
+["folderName","destName","output"].forEach(id=>document.getElementById(id).value="");
+document.getElementById("folderNameText").innerText="Choose or drop a folder here";
+document.getElementById("fileCountText").innerText="No folder selected";
+document.getElementById("sideFiles").innerText="0 files";
+document.getElementById("sideDest").innerText="Not selected";
+document.getElementById("total").innerText="0";
+document.getElementById("matched").innerText="0";
+document.getElementById("status").innerText="Idle";
+document.getElementById("totalSize").innerText="0 KB";
+document.getElementById("progressWrap").style.display="none";
+document.getElementById("progressFill").style.width="0%";
+document.getElementById("progressText").innerText="0%";
+closePreview();
+clearLog();
+log("Waiting for action...");
+toast("Reset done","info");
+}
+
+function setLoading(on){
+document.getElementById("spinner").style.display=on?"block":"none";
+document.getElementById("mergeTxt").style.display=on?"none":"inline";
+document.getElementById("mergeBtn").disabled=on;
+}
+
+function clearLog(){
+document.getElementById("log").innerHTML="";
+}
+
+function log(text){
+let el=document.getElementById("log");
+el.innerHTML+=text+"<br>";
+el.scrollTop=el.scrollHeight;
+}
+
+function showMessage(text,type){
+let d=document.getElementById("message");
+d.className="msg "+type;
+d.innerText=text;
+}
+</script>
+</body>
+</html>

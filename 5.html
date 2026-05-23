@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>TXT Consolidator</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    width:560px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.15);
+    backdrop-filter:blur(12px);
+    border-radius:16px;
+    padding:20px;
+    color:white;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+
+h2{
+    text-align:center;
+    font-size:22px;
+    margin-bottom:18px;
+    letter-spacing:1px;
+}
+
+label{
+    font-size:12px;
+    font-weight:500;
+    margin-bottom:6px;
+    display:block;
+    color:#cbd5e1;
+}
+
+.field{
+    margin-bottom:14px;
+}
+
+.row{
+    display:flex;
+    gap:8px;
+}
+
+input,
+select{
+    flex:1;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+    outline:none;
+    font-size:12px;
+}
+
+button{
+    border:none;
+    cursor:pointer;
+    border-radius:8px;
+    font-size:12px;
+    padding:10px 12px;
+    color:white;
+    transition:0.2s;
+}
+
+button:hover{
+    opacity:0.9;
+    transform:translateY(-1px);
+}
+
+.browse{
+    background:#3b82f6;
+}
+
+.green{
+    background:#22c55e;
+}
+
+.orange{
+    background:#f59e0b;
+}
+
+.red{
+    background:#ef4444;
+}
+
+.purple{
+    background:#8b5cf6;
+}
+
+textarea{
+    width:100%;
+    height:140px;
+    border-radius:10px;
+    border:none;
+    padding:10px;
+    font-size:11px;
+    resize:none;
+    outline:none;
+}
+
+.stats{
+    display:flex;
+    justify-content:space-between;
+    margin:14px 0;
+    font-size:11px;
+    color:#cbd5e1;
+    gap:10px;
+}
+
+.smallBox{
+    text-align:center;
+    flex:1;
+    background:rgba(255,255,255,0.05);
+    padding:10px;
+    border-radius:10px;
+}
+
+.smallBox b{
+    display:block;
+    font-size:16px;
+    color:white;
+    margin-bottom:3px;
+}
+
+.buttons{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+}
+
+.buttons button{
+    flex:1;
+}
+
+.footer{
+    text-align:center;
+    font-size:10px;
+    margin-top:10px;
+    color:#94a3b8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>TXT CONSOLIDATOR</h2>
+
+<!-- Source Folder -->
+<div class="field">
+
+<label>Source Folder</label>
+
+<div class="row">
+
+<input type="text"
+id="folderName"
+readonly
+placeholder="Select folder">
+
+<button class="browse"
+onclick="document.getElementById('folderPicker').click()">
+Browse
+</button>
+
+</div>
+
+<input type="file"
+id="folderPicker"
+webkitdirectory
+multiple
+hidden>
+
+</div>
+
+<!-- Output File -->
+<div class="field">
+
+<label>Output File Name</label>
+
+<input type="text"
+id="outputFile"
+placeholder="merged">
+
+</div>
+
+<!-- File Type -->
+<div class="field">
+
+<label>File Type</label>
+
+<select id="fileType">
+
+<option value=".txt">TXT (.txt)</option>
+<option value=".log">LOG (.log)</option>
+<option value=".csv">CSV (.csv)</option>
+<option value=".json">JSON (.json)</option>
+<option value="all">All Supported Files</option>
+
+</select>
+
+</div>
+
+<!-- Destination Folder -->
+<div class="field">
+
+<label>Destination Folder</label>
+
+<div class="row">
+
+<input type="text"
+id="destinationPath"
+readonly
+placeholder="Choose destination folder">
+
+<button class="browse"
+onclick="pickDestination()">
+Browse
+</button>
+
+</div>
+
+</div>
+
+<!-- Stats -->
+<div class="stats">
+
+<div class="smallBox">
+<b id="totalFiles">0</b>
+Total Files
+</div>
+
+<div class="smallBox">
+<b id="matchedFiles">0</b>
+Matched
+</div>
+
+<div class="smallBox">
+<b id="status">Idle</b>
+Status
+</div>
+
+</div>
+
+<!-- Log -->
+<textarea id="logArea" readonly></textarea>
+
+<!-- Buttons -->
+<div class="buttons">
+
+<button class="green"
+onclick="consolidateFiles()">
+Consolidate
+</button>
+
+<button class="purple"
+onclick="openMergedFile()">
+Open File
+</button>
+
+<button class="orange"
+onclick="clearFields()">
+Clear
+</button>
+
+<button class="red"
+onclick="goBack()">
+Back
+</button>
+
+</div>
+
+<div class="footer">
+Supports TXT / LOG / CSV / JSON / Mixed Files
+</div>
+
+</div>
+
+<script>
+
+let files = [];
+let destinationHandle = null;
+let savedFileHandle = null;
+
+const supportedExtensions = [
+".txt",
+".log",
+".csv",
+".json"
+];
+
+/* Folder Picker */
+
+document
+.getElementById("folderPicker")
+.addEventListener("change",(e)=>{
+
+files = [...e.target.files];
+
+if(files.length === 0)
+return;
+
+let folder =
+files[0].webkitRelativePath.split("/")[0];
+
+document.getElementById("folderName").value =
+folder;
+
+updateStats();
+
+document.getElementById("status").innerText =
+"Ready";
+
+document.getElementById("logArea").value =
+"Folder Loaded : " + folder;
+
+});
+
+/* Update Stats */
+
+function updateStats(){
+
+let extension =
+document.getElementById("fileType").value;
+
+let matched = 0;
+
+if(extension === "all"){
+
+matched = files.filter(f=>{
+
+let ext =
+"." + f.name.split(".").pop().toLowerCase();
+
+return supportedExtensions.includes(ext);
+
+}).length;
+
+}
+else{
+
+matched = files.filter(f =>
+f.name.toLowerCase().endsWith(extension)
+).length;
+
+}
+
+document.getElementById("totalFiles").innerText =
+files.length;
+
+document.getElementById("matchedFiles").innerText =
+matched;
+
+}
+
+/* File Type Change */
+
+document
+.getElementById("fileType")
+.addEventListener("change",updateStats);
+
+/* Destination Picker */
+
+async function pickDestination(){
+
+try{
+
+destinationHandle =
+await window.showDirectoryPicker();
+
+document.getElementById("destinationPath").value =
+destinationHandle.name;
+
+}
+catch(err){
+
+console.log("Destination selection cancelled");
+
+}
+
+}
+
+/* Consolidate */
+
+async function consolidateFiles(){
+
+let output =
+document.getElementById("outputFile")
+.value
+.trim();
+
+let selectedType =
+document.getElementById("fileType").value;
+
+let log =
+document.getElementById("logArea");
+
+if(files.length === 0){
+
+alert("Please select a folder");
+return;
+
+}
+
+if(output === ""){
+
+alert("Please enter output file name");
+return;
+
+}
+
+if(!destinationHandle){
+
+alert("Please select destination folder");
+return;
+
+}
+
+document.getElementById("status").innerText =
+"Processing";
+
+log.value += "\n\nStarting merge...\n";
+
+let merged = "";
+let count = 0;
+
+for(let f of files){
+
+let extension =
+"." + f.name.split(".").pop().toLowerCase();
+
+let allowed = false;
+
+if(selectedType === "all"){
+
+allowed =
+supportedExtensions.includes(extension);
+
+}
+else{
+
+allowed =
+f.name.toLowerCase().endsWith(selectedType);
+
+}
+
+if(allowed){
+
+try{
+
+let content = await f.text();
+
+/* ONLY CONTENT */
+
+merged += content + "\n\n";
+
+count++;
+
+log.value +=
+"\nReading : " + f.webkitRelativePath;
+
+}
+catch(err){
+
+log.value +=
+"\nError reading : " + f.name;
+
+}
+
+}
+
+}
+
+if(count === 0){
+
+alert("No matching files found");
+
+document.getElementById("status").innerText =
+"Idle";
+
+return;
+
+}
+
+try{
+
+savedFileHandle =
+await destinationHandle.getFileHandle(
+output + ".txt",
+{ create:true }
+);
+
+const writable =
+await savedFileHandle.createWritable();
+
+await writable.write(merged);
+
+await writable.close();
+
+document.getElementById("status").innerText =
+"Done";
+
+log.value +=
+"\n\nMerge Completed Successfully";
+
+log.value +=
+"\nSaved File : " + output + ".txt";
+
+alert("File saved successfully");
+
+}
+catch(err){
+
+console.error(err);
+
+document.getElementById("status").innerText =
+"Error";
+
+log.value +=
+"\n\nError saving file";
+
+alert("Error saving file");
+
+}
+
+}
+
+/* Open Merged File */
+
+async function openMergedFile(){
+
+if(!savedFileHandle){
+
+alert("No merged file available");
+return;
+
+}
+
+try{
+
+const file =
+await savedFileHandle.getFile();
+
+const text =
+await file.text();
+
+let newWindow =
+window.open();
+
+newWindow.document.write(
+"<pre style='white-space:pre-wrap;font-family:monospace;padding:20px'>" +
+text +
+"</pre>"
+);
+
+}
+catch(err){
+
+console.log(err);
+
+alert("Cannot open file");
+
+}
+
+}
+
+/* Clear */
+
+function clearFields(){
+
+files = [];
+destinationHandle = null;
+savedFileHandle = null;
+
+document.getElementById("folderName").value = "";
+document.getElementById("outputFile").value = "";
+document.getElementById("destinationPath").value = "";
+document.getElementById("logArea").value = "";
+
+document.getElementById("totalFiles").innerText =
+"0";
+
+document.getElementById("matchedFiles").innerText =
+"0";
+
+document.getElementById("status").innerText =
+"Idle";
+
+}
+
+/* Back */
+
+function goBack(){
+
+history.back();
+
+}
+
+</script>
+
+</body>
+
+</html>

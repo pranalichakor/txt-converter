@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>File Consolidator Pro</title>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+:root{
+
+--bg:#f4f0ff;
+--card:#ffffff;
+--primary:#7c3aed;
+--primary2:#9333ea;
+--text:#18181b;
+--muted:#71717a;
+--border:#ece7ff;
+--shadow:0 15px 40px rgba(124,58,237,0.12);
+
+}
+
+body{
+
+font-family:'DM Sans',sans-serif;
+
+background:
+radial-gradient(circle at top left,#ede9fe 0%,transparent 30%),
+radial-gradient(circle at bottom right,#ddd6fe 0%,transparent 30%),
+var(--bg);
+
+min-height:100vh;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+padding:10px;
+
+}
+
+/* SMALLER WIDTH BUT SLIGHTLY WIDE */
+.app{
+width:100%;
+max-width:580px;
+}
+
+/* CARD SMALL HEIGHT */
+.card{
+
+background:var(--card);
+
+border-radius:22px;
+
+padding:16px;
+
+box-shadow:var(--shadow);
+
+position:relative;
+overflow:hidden;
+
+}
+
+/* HEADER */
+
+.header{
+position:relative;
+z-index:2;
+}
+
+.badge{
+
+display:inline-block;
+
+padding:4px 10px;
+
+border-radius:999px;
+
+background:#f3e8ff;
+
+color:var(--primary);
+
+font-size:10px;
+font-weight:700;
+
+margin-bottom:8px;
+
+}
+
+.header h1{
+
+font-size:22px;
+line-height:1.1;
+font-weight:800;
+
+color:var(--text);
+
+}
+
+.header p{
+
+margin-top:6px;
+
+font-size:12px;
+line-height:1.4;
+
+color:var(--muted);
+
+}
+
+/* SECTION */
+
+.section{
+
+margin-top:12px;
+
+position:relative;
+z-index:2;
+
+}
+
+/* LABEL */
+
+.label{
+
+display:block;
+
+font-size:11px;
+font-weight:700;
+
+margin-bottom:6px;
+
+color:#3f3f46;
+
+}
+
+/* INPUT ROW */
+
+.input-row{
+
+display:flex;
+gap:8px;
+
+}
+
+/* INPUT */
+
+.text-input{
+
+width:100%;
+
+padding:10px 12px;
+
+border-radius:12px;
+
+border:1px solid var(--border);
+
+background:#fafafa;
+
+outline:none;
+
+font-size:12px;
+
+}
+
+.text-input:focus{
+border-color:var(--primary);
+box-shadow:0 0 0 3px rgba(124,58,237,0.10);
+}
+
+/* BUTTON */
+
+.btn{
+
+border:none;
+
+padding:10px 12px;
+
+border-radius:12px;
+
+cursor:pointer;
+
+font-size:12px;
+font-weight:700;
+
+transition:0.2s;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+gap:6px;
+
+}
+
+.btn:hover{
+transform:translateY(-1px);
+}
+
+.btn-primary{
+
+background:linear-gradient(135deg,var(--primary),var(--primary2));
+color:white;
+
+}
+
+.btn-secondary{
+
+background:#faf5ff;
+color:var(--primary);
+border:1px solid #e9d5ff;
+
+}
+
+.btn-outline{
+
+background:white;
+border:1px solid #e5e7eb;
+color:#3f3f46;
+
+}
+
+/* GRID */
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+/* STATS */
+.stats{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:8px;
+margin-top:12px;
+}
+
+.stat{
+background:white;
+border-radius:14px;
+padding:10px;
+text-align:center;
+border:1px solid #f1f5f9;
+}
+
+.stat-value{
+font-size:18px;
+font-weight:800;
+color:var(--primary);
+}
+
+.stat-label{
+font-size:10px;
+color:var(--muted);
+}
+
+/* ACTIONS */
+.actions{
+display:flex;
+gap:8px;
+margin-top:12px;
+}
+
+.actions .btn{
+flex:1;
+}
+
+/* RESULT */
+#resultRow{
+display:none;
+margin-top:8px;
+}
+
+/* MESSAGE */
+.msg{
+margin-top:10px;
+padding:10px 12px;
+border-radius:12px;
+font-size:12px;
+font-weight:600;
+display:none;
+}
+
+.success{
+display:block;
+background:#ecfdf5;
+color:#059669;
+}
+
+.warning{
+display:block;
+background:#fff7ed;
+color:#ea580c;
+}
+
+/* LOG */
+.log-wrap{
+
+margin-top:12px;
+
+background:#fafafa;
+
+border:1px solid #f1f5f9;
+
+border-radius:14px;
+
+padding:10px;
+
+height:95px;
+
+overflow:auto;
+
+font-size:10px;
+
+font-family:'DM Mono',monospace;
+
+line-height:1.5;
+
+color:#52525b;
+
+}
+
+/* SPINNER */
+.spinner{
+width:12px;
+height:12px;
+border:2px solid rgba(255,255,255,0.3);
+border-top-color:white;
+border-radius:50%;
+animation:spin 0.7s linear infinite;
+display:none;
+}
+
+@keyframes spin{
+100%{transform:rotate(360deg);}
+}
+
+/* MOBILE */
+@media(max-width:600px){
+
+.app{
+max-width:100%;
+}
+
+.grid{
+grid-template-columns:1fr;
+}
+
+.actions{
+flex-direction:column;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="card">
+
+<div class="header">
+<h1>File Consolidator</h1>
+<p>Merge multiple files into one file</p>
+</div>
+
+<!-- SOURCE -->
+<div class="section">
+<div class="label">Source Folder</div>
+<div class="input-row">
+<input class="text-input" id="folderName" readonly placeholder="Select folder">
+<button class="btn btn-secondary" onclick="document.getElementById('folder').click()">Browse</button>
+</div>
+<input type="file" id="folder" webkitdirectory multiple hidden>
+</div>
+
+<!-- DEST -->
+<div class="section">
+<div class="label">Destination Folder</div>
+<div class="input-row">
+<input class="text-input" id="destName" readonly placeholder="Select destination">
+<button class="btn btn-secondary" onclick="pickDestination()">Pick</button>
+</div>
+</div>
+
+<!-- OPTIONS -->
+<div class="section">
+<div class="grid">
+<input class="text-input" id="output" placeholder="Output name">
+<select class="text-input" id="type">
+<option value="all">All</option>
+<option value=".txt">TXT</option>
+<option value=".js">JS</option>
+<option value=".json">JSON</option>
+<option value=".html">HTML</option>
+<option value=".css">CSS</option>
+<option value=".md">MD</option>
+</select>
+</div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+<div class="stat"><div class="stat-value" id="total">0</div><div class="stat-label">Total</div></div>
+<div class="stat"><div class="stat-value" id="matched">0</div><div class="stat-label">Matched</div></div>
+<div class="stat"><div class="stat-value" id="status">Idle</div><div class="stat-label">Status</div></div>
+</div>
+
+<!-- ACTIONS -->
+<div class="actions">
+<button class="btn btn-primary" id="mergeBtn" onclick="mergeFiles()">Consolidate <div class="spinner" id="spinner"></div></button>
+<button class="btn btn-outline" onclick="clearAll()">Reset</button>
+</div>
+
+<!-- RESULT -->
+<div id="resultRow">
+<div class="actions">
+<button class="btn btn-outline" onclick="downloadFile()">Download</button>
+<button class="btn btn-outline" onclick="viewFile()">Preview</button>
+</div>
+</div>
+
+<div class="msg" id="message"></div>
+
+<div class="log-wrap" id="log">Ready...</div>
+
+</div>
+</div>
+
+<script>
+
+let files=[],mergedData="",fileName="",dirHandle=null;
+
+document.getElementById("folder").addEventListener("change",(e)=>{
+files=[...e.target.files];
+if(files.length){
+document.getElementById("folderName").value=files[0].webkitRelativePath.split("/")[0];
+document.getElementById("total").innerText=files.length;
+log("Files loaded: "+files.length);
+}
+});
+
+async function pickDestination(){
+try{
+dirHandle=await window.showDirectoryPicker({mode:"readwrite"});
+document.getElementById("destName").value=dirHandle.name;
+showMessage("Destination selected","success");
+}catch(e){
+showMessage("Cancelled","warning");
+}
+}
+
+async function saveToDestination(){
+try{
+if(!dirHandle)return false;
+let fh=await dirHandle.getFileHandle(fileName,{create:true});
+let w=await fh.createWritable();
+await w.write(mergedData);
+await w.close();
+return true;
+}catch(e){return false;}
+}
+
+async function mergeFiles(){
+
+if(!files.length){alert("Select folder");return;}
+
+let type=document.getElementById("type").value;
+let output=document.getElementById("output").value||"merged";
+
+fileName=output+".txt";
+mergedData="";
+
+setLoading(true);
+document.getElementById("status").innerText="...";
+
+let matched=0;
+
+for(let f of files){
+let ext="."+f.name.split(".").pop().toLowerCase();
+if(type==="all"||type===ext){
+mergedData+=await f.text()+"\n\n";
+matched++;
+log("Merged "+f.name);
+}
+}
+
+setLoading(false);
+
+document.getElementById("status").innerText="Done";
+document.getElementById("matched").innerText=matched;
+
+document.getElementById("resultRow").style.display="block";
+
+if(dirHandle){
+let ok=await saveToDestination();
+showMessage(ok?"Saved":"Use download","success");
+}else showMessage("No destination","warning");
+
+}
+
+function downloadFile(){
+let a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([mergedData]));
+a.download=fileName;
+a.click();
+}
+
+function viewFile(){
+let w=window.open();
+w.document.write("<pre>"+mergedData.replace(/</g,"&lt;")+"</pre>");
+}
+
+function clearAll(){
+files=[];mergedData="";dirHandle=null;
+document.getElementById("folderName").value="";
+document.getElementById("destName").value="";
+document.getElementById("output").value="";
+document.getElementById("total").innerText=0;
+document.getElementById("matched").innerText=0;
+document.getElementById("status").innerText="Idle";
+document.getElementById("resultRow").style.display="none";
+document.getElementById("log").innerHTML="Ready...";
+}
+
+function setLoading(on){
+document.getElementById("spinner").style.display=on?"block":"none";
+document.getElementById("mergeBtn").disabled=on;
+}
+
+function log(t){
+document.getElementById("log").innerHTML+=t+"<br>";
+}
+
+function showMessage(t,type){
+let d=document.getElementById("message");
+d.className="msg "+type;
+d.innerText=t;
+}
+
+</script>
+
+</body>
+</html>

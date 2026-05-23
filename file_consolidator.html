@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>File Consolidator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0f11;
+    --surface: #161719;
+    --surface2: #1e2023;
+    --border: #2a2d32;
+    --border2: #383c42;
+    --accent: #e8ff47;
+    --accent-dim: #c8df30;
+    --text: #f0f0ee;
+    --text2: #8a8f99;
+    --text3: #555a63;
+    --ok: #4ade80;
+    --err: #f87171;
+    --warn: #fbbf24;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --radius: 8px;
+    --radius-lg: 14px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .topbar-logo {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .topbar-logo svg { width: 18px; height: 18px; }
+  .topbar-title { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+  .topbar-sub { font-size: 12px; color: var(--text2); font-family: var(--font-mono); margin-left: auto; }
+
+  /* ── LAYOUT ── */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  /* ── LEFT PANEL ── */
+  .panel-left {
+    border-right: 1px solid var(--border);
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+  }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .field-label svg { width: 13px; height: 13px; opacity: 0.6; }
+
+  .folder-pick {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .folder-display {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .folder-display.active { color: var(--text); border-color: var(--border2); }
+
+  .btn-browse {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 6px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-browse:hover { background: var(--border); border-color: var(--text3); }
+
+  .text-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .text-input:focus { border-color: var(--accent); }
+  .text-input::placeholder { color: var(--text3); }
+
+  /* ── STATS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .stat-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    font-family: var(--font-mono);
+  }
+  .stat-val.lit { color: var(--accent); }
+  .stat-lbl {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 3px;
+    font-family: var(--font-mono);
+  }
+
+  /* ── PROGRESS ── */
+  .progress-wrap { display: none; }
+  .progress-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.2s;
+  }
+  .progress-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── ACTION BUTTONS ── */
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .btn-main {
+    width: 100%;
+    padding: 13px;
+    border-radius: var(--radius);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.15s;
+    border: none;
+  }
+  .btn-consolidate {
+    background: var(--accent);
+    color: #0e0f11;
+  }
+  .btn-consolidate:hover:not(:disabled) { background: var(--accent-dim); }
+  .btn-consolidate:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-row2 { display: flex; gap: 8px; }
+  .btn-secondary {
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.15s;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text);
+  }
+  .btn-secondary:hover { background: var(--surface2); border-color: var(--text3); }
+  .btn-clear { color: var(--err); border-color: #3a1f1f; }
+  .btn-clear:hover { background: #1e1515; border-color: #6b2f2f; }
+
+  /* ── RIGHT PANEL (LOG) ── */
+  .panel-right {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .log-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .log-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+  .log-badge {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    display: none;
+  }
+  .log-badge.ok { color: var(--ok); border-color: #1a3a26; background: #0d1f15; display: inline; }
+  .log-badge.err { color: var(--err); border-color: #3a1a1a; background: #1f0d0d; display: inline; }
+
+  .log-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.8;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+  .log-body::-webkit-scrollbar { width: 4px; }
+  .log-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+  .log-empty {
+    color: var(--text3);
+    font-style: italic;
+    margin-top: 8px;
+  }
+
+  .log-line {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 2px 0;
+    animation: fadein 0.15s ease;
+  }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .log-line .dot {
+    margin-top: 6px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--text3);
+  }
+  .log-line.ok .dot { background: var(--ok); }
+  .log-line.err .dot { background: var(--err); }
+  .log-line.head .dot { background: var(--accent); width: 7px; height: 7px; margin-top: 5px; }
+  .log-line.warn .dot { background: var(--warn); }
+
+  .log-line .msg { color: var(--text2); }
+  .log-line.ok .msg { color: #a3e6bc; }
+  .log-line.err .msg { color: #f9aaaa; }
+  .log-line.head .msg { color: var(--text); font-weight: 500; }
+  .log-line.warn .msg { color: #fcd97b; }
+
+  .log-line .ts {
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--text3);
+    font-size: 11px;
+  }
+
+  /* ── FILE TREE PREVIEW ── */
+  .tree-wrap { display: none; }
+  .tree-inner {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text2);
+    max-height: 140px;
+    overflow-y: auto;
+    line-height: 1.9;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+  .tree-inner::-webkit-scrollbar { width: 3px; }
+  .tree-inner::-webkit-scrollbar-thumb { background: var(--border2); }
+  .tree-file { color: var(--text2); }
+  .tree-dir { color: var(--accent); opacity: 0.7; }
+
+  /* ── UNSUPPORTED ── */
+  .unsupported {
+    display: none;
+    background: #1e1515;
+    border: 1px solid #4a2020;
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--err);
+    font-family: var(--font-mono);
+  }
+
+  @media (max-width: 700px) {
+    .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+    .topbar-sub { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 18 18" fill="none">
+      <rect x="1" y="1" width="7" height="7" rx="1.5" fill="#0e0f11"/>
+      <rect x="10" y="1" width="7" height="7" rx="1.5" fill="#0e0f11"/>
+      <rect x="1" y="10" width="7" height="7" rx="1.5" fill="#0e0f11"/>
+      <rect x="10" y="10" width="7" height="7" rx="1.5" fill="#0e0f11" opacity="0.5"/>
+      <line x1="9" y1="4.5" x2="10" y2="4.5" stroke="#0e0f11" stroke-width="2"/>
+      <circle cx="13.5" cy="13.5" r="2.5" fill="#0e0f11"/>
+    </svg>
+  </div>
+  <span class="topbar-title">File Consolidator</span>
+  <span class="topbar-sub">v1.0 — works offline</span>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT PANEL -->
+  <div class="panel-left">
+
+    <!-- Script folder -->
+    <div>
+      <div class="field-label">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M1 3.5A1.5 1.5 0 012.5 2h3L7 3.5h4.5A1.5 1.5 0 0113 5v6A1.5 1.5 0 0111.5 12.5h-9A1.5 1.5 0 011 11V3.5z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        Script folder
+      </div>
+      <div class="folder-pick">
+        <div class="folder-display" id="folderDisplay">No folder selected</div>
+        <button class="btn-browse" onclick="pickFolder()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4.5h10M5 2l2 2 2-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><rect x="1" y="5" width="12" height="7" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+          Browse
+        </button>
+      </div>
+      <div class="unsupported" id="unsupported">
+        ⚠ Your browser doesn't support the File System Access API. Please use Chrome or Edge (desktop).
+      </div>
+    </div>
+
+    <!-- Output filename -->
+    <div>
+      <div class="field-label">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M3 1.5h5.5L11 4v8.5a.5.5 0 01-.5.5H3a.5.5 0 01-.5-.5V2a.5.5 0 01.5-.5z" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M8.5 1.5V4H11" stroke="currentColor" stroke-width="1.2"/></svg>
+        Consolidated output filename
+      </div>
+      <input class="text-input" type="text" id="outName" value="consolidated_output.txt" placeholder="output_filename.txt"/>
+    </div>
+
+    <!-- File tree preview -->
+    <div class="tree-wrap" id="treeWrap">
+      <div class="field-label">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M2 2v10M2 7h4M6 5v4M6 5h3M6 9h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        File tree
+      </div>
+      <div class="tree-inner" id="treeInner"></div>
+    </div>
+
+    <!-- Stats -->
+    <div>
+      <div class="field-label">
+        <svg viewBox="0 0 14 14" fill="none"><rect x="1" y="7" width="3" height="6" rx="0.5" stroke="currentColor" stroke-width="1.2" fill="none"/><rect x="5.5" y="4" width="3" height="9" rx="0.5" stroke="currentColor" stroke-width="1.2" fill="none"/><rect x="10" y="1.5" width="3" height="11.5" rx="0.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        Scan results
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-val" id="statFiles">—</div>
+          <div class="stat-lbl">txt files</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="statFolders">—</div>
+          <div class="stat-lbl">subfolders</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="statSize">—</div>
+          <div class="stat-lbl">total size</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="statLines">—</div>
+          <div class="stat-lbl">total lines</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-label">
+        <span id="progressText">Merging...</span>
+        <span id="progressPct">0%</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn-main btn-consolidate" id="btnConsolidate" onclick="consolidate()" disabled>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 4h4M3 8h4M3 12h10M9 4h4M9 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7 4v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2"/>
+        </svg>
+        Consolidate
+      </button>
+      <div class="btn-row2">
+        <button class="btn-secondary btn-clear" onclick="clearAll()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M5.5 3.5V2.5h3V3.5M3 3.5l.8 8a.5.5 0 00.5.5h5.4a.5.5 0 00.5-.5l.8-8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Clear
+        </button>
+        <button class="btn-secondary" onclick="goBack()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Back
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /panel-left -->
+
+  <!-- RIGHT PANEL -->
+  <div class="panel-right">
+    <div class="log-header">
+      <span class="log-title">Activity log</span>
+      <span class="log-badge" id="statusBadge"></span>
+    </div>
+    <div class="log-body" id="logBody">
+      <div class="log-empty">Pick a folder to begin. All activity will appear here.</div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ── STATE ──
+let rootHandle = null;
+let allFiles   = [];
+let running    = false;
+
+// ── UTILS ──
+function fmtSize(b) {
+  if (b < 1024)       return b + ' B';
+  if (b < 1048576)    return (b / 1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b / 1048576).toFixed(2) + ' MB';
+  return (b / 1073741824).toFixed(2) + ' GB';
+}
+
+function fmtNum(n) {
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
+
+function ts() {
+  return new Date().toLocaleTimeString('en-GB', { hour12: false });
+}
+
+// ── LOGGING ──
+function log(msg, type = 'info') {
+  const body = document.getElementById('logBody');
+  const empty = body.querySelector('.log-empty');
+  if (empty) empty.remove();
+
+  const line = document.createElement('div');
+  line.className = 'log-line ' + type;
+  line.innerHTML = `<span class="dot"></span><span class="msg">${msg}</span><span class="ts">${ts()}</span>`;
+  body.appendChild(line);
+  body.scrollTop = body.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('logBody').innerHTML = '<div class="log-empty">Pick a folder to begin. All activity will appear here.</div>';
+}
+
+// ── WALK DIRECTORY (recursive) ──
+async function walkDir(dirHandle, path = '', treeLines = []) {
+  const files   = [];
+  const folders = new Set();
+
+  const entries = [];
+  for await (const [name, handle] of dirHandle.entries()) entries.push([name, handle]);
+  entries.sort((a, b) => {
+    if (a[1].kind !== b[1].kind) return a[1].kind === 'directory' ? -1 : 1;
+    return a[0].localeCompare(b[0]);
+  });
+
+  for (const [name, handle] of entries) {
+    if (handle.kind === 'directory') {
+      const prefix = path ? '  '.repeat(path.split('/').filter(Boolean).length) : '';
+      treeLines.push({ text: prefix + '📁 ' + name + '/', cls: 'tree-dir' });
+      folders.add((path ? path + '/' : '') + name);
+      const sub = await walkDir(handle, (path ? path + '/' : '') + name, treeLines);
+      files.push(...sub.files);
+      sub.folders.forEach(f => folders.add(f));
+    } else if (handle.kind === 'file' && name.toLowerCase().endsWith('.txt')) {
+      const depth = path ? path.split('/').filter(Boolean).length : 0;
+      const prefix = '  '.repeat(depth);
+      treeLines.push({ text: prefix + '📄 ' + name, cls: 'tree-file' });
+      files.push({ name, path: path ? path + '/' + name : name, handle });
+    }
+  }
+  return { files, folders, treeLines };
+}
+
+// ── PICK FOLDER ──
+async function pickFolder() {
+  if (!window.showDirectoryPicker) {
+    document.getElementById('unsupported').style.display = 'block';
+    return;
+  }
+  if (running) return;
+
+  try {
+    rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+  } catch (e) {
+    if (e.name !== 'AbortError') log('Error opening folder: ' + e.message, 'err');
+    return;
+  }
+
+  clearLog();
+  resetStats();
+  document.getElementById('folderDisplay').textContent = rootHandle.name;
+  document.getElementById('folderDisplay').classList.add('active');
+  log('Scanning: ' + rootHandle.name, 'head');
+
+  const { files, folders, treeLines } = await walkDir(rootHandle);
+  allFiles = files;
+
+  // populate tree
+  const treeInner = document.getElementById('treeInner');
+  treeInner.innerHTML = `<div class="tree-dir">📁 ${rootHandle.name}/</div>` +
+    treeLines.map(l => `<div class="${l.cls}">${l.text}</div>`).join('');
+  document.getElementById('treeWrap').style.display = 'block';
+
+  if (files.length === 0) {
+    log('No .txt files found in this folder.', 'warn');
+    setStats(0, folders.size, 0, 0);
+    return;
+  }
+
+  // calc stats
+  let totalSize = 0, totalLines = 0;
+  for (const f of files) {
+    const file = await f.handle.getFile();
+    totalSize += file.size;
+    const text = await file.text();
+    totalLines += text.split('\n').length;
+    log('Found: ' + f.path, 'info');
+  }
+
+  setStats(files.length, folders.size, totalSize, totalLines);
+  log(`Scan complete — ${files.length} file(s) in ${folders.size} subfolder(s)`, 'ok');
+  document.getElementById('btnConsolidate').disabled = false;
+}
+
+function setStats(files, folders, size, lines) {
+  document.getElementById('statFiles').textContent   = files;
+  document.getElementById('statFiles').classList.toggle('lit', files > 0);
+  document.getElementById('statFolders').textContent = folders;
+  document.getElementById('statSize').textContent    = files ? fmtSize(size) : '—';
+  document.getElementById('statLines').textContent   = files ? fmtNum(lines)  : '—';
+}
+
+function resetStats() {
+  ['statFiles','statFolders','statSize','statLines'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+    document.getElementById(id).classList.remove('lit');
+  });
+}
+
+// ── CONSOLIDATE ──
+async function consolidate() {
+  if (!rootHandle || allFiles.length === 0 || running) return;
+  running = true;
+
+  const outName = (document.getElementById('outName').value.trim() || 'consolidated_output.txt');
+  const btn     = document.getElementById('btnConsolidate');
+  btn.disabled  = true;
+  btn.textContent = 'Merging…';
+
+  const progWrap = document.getElementById('progressWrap');
+  const progFill = document.getElementById('progressFill');
+  const progText = document.getElementById('progressText');
+  const progPct  = document.getElementById('progressPct');
+  progWrap.style.display = 'block';
+
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'log-badge';
+  badge.textContent = '';
+
+  log('Starting consolidation → ' + outName, 'head');
+
+  const now = new Date();
+  let output = '';
+  output += '╔' + '═'.repeat(58) + '╗\n';
+  output += '║  CONSOLIDATED FILE' + ' '.repeat(39) + '║\n';
+  output += '╠' + '═'.repeat(58) + '╣\n';
+  output += '║  Generated : ' + now.toLocaleString().padEnd(44) + '║\n';
+  output += '║  Source    : ' + rootHandle.name.slice(0,44).padEnd(44) + '║\n';
+  output += '║  Files     : ' + String(allFiles.length).padEnd(44) + '║\n';
+  output += '╚' + '═'.repeat(58) + '╝\n\n';
+
+  let done = 0, errors = 0;
+
+  for (const f of allFiles) {
+    try {
+      const file = await f.handle.getFile();
+      const text = await file.text();
+
+      output += '┌─ FILE: ' + f.path + '\n';
+      output += '│  Size: ' + fmtSize(file.size) + '  |  Lines: ' + text.split('\n').length + '\n';
+      output += '└' + '─'.repeat(Math.min(60, 10 + f.path.length)) + '\n';
+      output += text.trimEnd() + '\n\n';
+
+      done++;
+      const pct = Math.round((done / allFiles.length) * 100);
+      progFill.style.width = pct + '%';
+      progText.textContent = 'Merged ' + done + ' / ' + allFiles.length;
+      progPct.textContent  = pct + '%';
+      log('Merged: ' + f.path, 'ok');
+    } catch (e) {
+      errors++;
+      log('Skipped: ' + f.path + ' — ' + e.message, 'err');
+    }
+  }
+
+  // footer
+  output += '╔' + '═'.repeat(58) + '╗\n';
+  output += '║  END OF CONSOLIDATED FILE' + ' '.repeat(32) + '║\n';
+  output += '║  Files merged : ' + String(done).padEnd(41) + '║\n';
+  output += '║  Errors       : ' + String(errors).padEnd(41) + '║\n';
+  output += '╚' + '═'.repeat(58) + '╝\n';
+
+  // save
+  try {
+    const outHandle = await rootHandle.getFileHandle(outName, { create: true });
+    const writable  = await outHandle.createWritable();
+    await writable.write(output);
+    await writable.close();
+
+    log('Saved → ' + rootHandle.name + '/' + outName, 'ok');
+    log('Done! ' + done + ' file(s) merged, ' + errors + ' error(s).', 'head');
+    badge.textContent = '✓ ' + done + ' merged';
+    badge.className   = 'log-badge ok';
+  } catch (e) {
+    log('Save failed: ' + e.message, 'err');
+    badge.textContent = '✗ save failed';
+    badge.className   = 'log-badge err';
+  }
+
+  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 4h4M3 8h4M3 12h10M9 4h4M9 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7 4v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 2"/></svg> Consolidate`;
+  btn.disabled = false;
+  running = false;
+}
+
+// ── CLEAR ──
+function clearAll() {
+  if (running) return;
+  rootHandle = null;
+  allFiles   = [];
+  document.getElementById('folderDisplay').textContent = 'No folder selected';
+  document.getElementById('folderDisplay').classList.remove('active');
+  document.getElementById('treeWrap').style.display    = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('progressFill').style.width  = '0%';
+  document.getElementById('statusBadge').className     = 'log-badge';
+  document.getElementById('statusBadge').textContent   = '';
+  document.getElementById('btnConsolidate').disabled   = true;
+  resetStats();
+  clearLog();
+}
+
+// ── BACK ──
+function goBack() {
+  clearAll();
+  clearLog();
+  document.getElementById('logBody').innerHTML =
+    '<div class="log-empty">Cleared. Pick a folder to start again.</div>';
+}
+
+// ── BROWSER CHECK ──
+if (!window.showDirectoryPicker) {
+  document.getElementById('unsupported').style.display = 'block';
+}
+</script>
+</body>
+</html>

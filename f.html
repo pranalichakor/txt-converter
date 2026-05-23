@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>File Consolidator Pro</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#0f172a,#1e293b);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+}
+
+.container{
+width:650px;
+background:rgba(255,255,255,0.08);
+border:1px solid rgba(255,255,255,0.15);
+border-radius:18px;
+padding:25px;
+backdrop-filter:blur(10px);
+color:white;
+box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+h2{
+text-align:center;
+margin-bottom:20px;
+font-size:28px;
+font-weight:600;
+}
+
+label{
+display:block;
+margin-top:15px;
+font-size:13px;
+color:#cbd5e1;
+}
+
+input,select,textarea{
+width:100%;
+padding:12px;
+border:none;
+outline:none;
+border-radius:10px;
+margin-top:6px;
+background:#f8fafc;
+}
+
+textarea{
+height:160px;
+font-size:12px;
+resize:none;
+}
+
+.row{
+display:flex;
+gap:10px;
+margin-top:6px;
+}
+
+.row input{
+flex:1;
+}
+
+button{
+padding:12px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-weight:500;
+transition:0.2s;
+color:white;
+}
+
+button:hover{
+transform:translateY(-1px);
+opacity:0.95;
+}
+
+.blue{
+background:#2563eb;
+}
+
+.green{
+background:#16a34a;
+}
+
+.orange{
+background:#ea580c;
+}
+
+.purple{
+background:#7c3aed;
+}
+
+.actions{
+display:flex;
+gap:10px;
+margin-top:18px;
+}
+
+.actions button{
+flex:1;
+}
+
+.stats{
+display:flex;
+gap:12px;
+margin-top:20px;
+}
+
+.box{
+flex:1;
+background:rgba(255,255,255,0.06);
+padding:15px;
+border-radius:12px;
+text-align:center;
+}
+
+.box b{
+display:block;
+font-size:22px;
+margin-bottom:5px;
+}
+
+.loader{
+width:35px;
+height:35px;
+border:4px solid rgba(255,255,255,0.2);
+border-top:4px solid #22c55e;
+border-radius:50%;
+animation:spin 1s linear infinite;
+margin:18px auto;
+display:none;
+}
+
+@keyframes spin{
+100%{
+transform:rotate(360deg);
+}
+}
+
+#resultButtons{
+display:none;
+}
+
+.success{
+color:#22c55e;
+font-size:13px;
+margin-top:10px;
+text-align:center;
+}
+
+.warning{
+color:#facc15;
+font-size:13px;
+margin-top:10px;
+text-align:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>FILE CONSOLIDATOR PRO</h2>
+
+<label>Source Folder</label>
+
+<div class="row">
+<input type="text" id="folderName" readonly placeholder="Choose source folder">
+<button class="blue" onclick="document.getElementById('folder').click()">
+Browse
+</button>
+</div>
+
+<input type="file" id="folder" webkitdirectory multiple hidden>
+
+<label>Output File Name</label>
+<input type="text" id="output" placeholder="merged">
+
+<label>Filter File Type</label>
+
+<select id="type">
+<option value="all">ALL FILES</option>
+<option value=".txt">TXT</option>
+<option value=".log">LOG</option>
+<option value=".csv">CSV</option>
+<option value=".json">JSON</option>
+<option value=".js">JS</option>
+<option value=".py">PY</option>
+<option value=".html">HTML</option>
+<option value=".css">CSS</option>
+<option value=".md">MD</option>
+</select>
+
+<label>Destination Folder</label>
+
+<div class="row">
+<input type="text" id="destName" readonly placeholder="Choose destination folder">
+<button class="purple" onclick="pickDestination()">
+Pick Folder
+</button>
+</div>
+
+<div class="stats">
+
+<div class="box">
+<b id="total">0</b>
+Total Files
+</div>
+
+<div class="box">
+<b id="matched">0</b>
+Matched
+</div>
+
+<div class="box">
+<b id="status">Idle</b>
+Status
+</div>
+
+</div>
+
+<div class="loader" id="loader"></div>
+
+<div class="actions">
+<button class="green" onclick="mergeFiles()">
+Consolidate
+</button>
+
+<button class="orange" onclick="clearAll()">
+Clear
+</button>
+</div>
+
+<div id="resultButtons">
+
+<div class="actions">
+
+<button class="green" onclick="downloadFile()">
+Download Locally
+</button>
+
+<button class="blue" onclick="viewFile()">
+View Content
+</button>
+
+</div>
+
+</div>
+
+<div id="message"></div>
+
+<textarea id="log" readonly placeholder="Logs will appear here..."></textarea>
+
+</div>
+
+<script>
+
+let files = [];
+let mergedData = "";
+let fileName = "";
+let dirHandle = null;
+
+/* SOURCE FOLDER */
+
+document.getElementById("folder").addEventListener("change",(e)=>{
+
+files = [...e.target.files];
+
+if(files.length > 0){
+
+document.getElementById("folderName").value =
+files[0].webkitRelativePath.split("/")[0];
+
+document.getElementById("total").innerText = files.length;
+
+log("Source folder selected successfully");
+
+}
+
+});
+
+/* PICK DESTINATION */
+
+async function pickDestination(){
+
+try{
+
+dirHandle = await window.showDirectoryPicker({
+mode:"readwrite"
+});
+
+document.getElementById("destName").value = dirHandle.name;
+
+showMessage("Destination folder selected","success");
+
+}catch(err){
+
+showMessage("Folder selection cancelled or blocked","warning");
+
+}
+
+}
+
+/* SAVE TO DESTINATION */
+
+async function saveToDestination(){
+
+try{
+
+if(!dirHandle){
+return false;
+}
+
+let fileHandle = await dirHandle.getFileHandle(fileName,{
+create:true
+});
+
+let writable = await fileHandle.createWritable();
+
+await writable.write(mergedData);
+
+await writable.close();
+
+return true;
+
+}catch(err){
+
+console.log(err);
+return false;
+
+}
+
+}
+
+/* MERGE FILES */
+
+async function mergeFiles(){
+
+if(files.length === 0){
+
+alert("Please select source folder");
+return;
+
+}
+
+let type = document.getElementById("type").value;
+
+let output = document.getElementById("output").value.trim() || "merged";
+
+fileName = output + ".txt";
+
+mergedData = "";
+
+document.getElementById("loader").style.display = "block";
+document.getElementById("status").innerText = "Processing";
+
+log("Processing started...");
+
+let matched = 0;
+
+for(let file of files){
+
+let extension = "." + file.name.split(".").pop().toLowerCase();
+
+if(type === "all" || type === extension){
+
+try{
+
+let content = await file.text();
+
+mergedData += content + "\n\n";
+
+matched++;
+
+log("Merged : " + file.name);
+
+}catch(err){
+
+log("Failed : " + file.name);
+
+}
+
+}
+
+}
+
+document.getElementById("loader").style.display = "none";
+document.getElementById("status").innerText = "Completed";
+document.getElementById("matched").innerText = matched;
+
+log("Processing completed");
+
+document.getElementById("resultButtons").style.display = "block";
+
+if(dirHandle){
+
+let success = await saveToDestination();
+
+if(success){
+
+showMessage(
+"File saved successfully to destination folder",
+"success"
+);
+
+}else{
+
+showMessage(
+"Browser blocked saving. Use Download button.",
+"warning"
+);
+
+}
+
+}else{
+
+showMessage(
+"No destination selected. Use Download button.",
+"warning"
+);
+
+}
+
+}
+
+/* DOWNLOAD LOCAL */
+
+function downloadFile(){
+
+if(!mergedData){
+return;
+}
+
+let blob = new Blob([mergedData],{
+type:"text/plain"
+});
+
+let a = document.createElement("a");
+
+a.href = URL.createObjectURL(blob);
+
+a.download = fileName;
+
+document.body.appendChild(a);
+
+a.click();
+
+document.body.removeChild(a);
+
+URL.revokeObjectURL(a.href);
+
+showMessage("File downloaded locally","success");
+
+}
+
+/* VIEW */
+
+function viewFile(){
+
+if(!mergedData){
+return;
+}
+
+let win = window.open();
+
+win.document.write(`
+<pre style="
+padding:20px;
+font-family:monospace;
+white-space:pre-wrap;
+word-wrap:break-word;
+background:#0f172a;
+color:white;
+min-height:100vh;
+">
+${mergedData}
+</pre>
+`);
+
+}
+
+/* CLEAR */
+
+function clearAll(){
+
+files = [];
+mergedData = "";
+dirHandle = null;
+fileName = "";
+
+document.getElementById("folderName").value = "";
+document.getElementById("destName").value = "";
+document.getElementById("output").value = "";
+
+document.getElementById("total").innerText = "0";
+document.getElementById("matched").innerText = "0";
+document.getElementById("status").innerText = "Idle";
+
+document.getElementById("loader").style.display = "none";
+
+document.getElementById("resultButtons").style.display = "none";
+
+document.getElementById("log").value = "";
+
+document.getElementById("message").innerHTML = "";
+
+}
+
+/* LOG */
+
+function log(text){
+
+let area = document.getElementById("log");
+
+area.value += text + "\n";
+
+area.scrollTop = area.scrollHeight;
+
+}
+
+/* MESSAGE */
+
+function showMessage(text,type){
+
+let div = document.getElementById("message");
+
+div.className = type;
+
+div.innerText = text;
+
+}
+
+</script>
+
+</body>
+</html>

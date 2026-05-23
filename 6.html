@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Universal File Consolidator</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    width:580px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.15);
+    backdrop-filter:blur(12px);
+    border-radius:16px;
+    padding:20px;
+    color:white;
+}
+
+h2{
+    text-align:center;
+    margin-bottom:15px;
+}
+
+label{
+    font-size:12px;
+    color:#cbd5e1;
+    display:block;
+    margin-bottom:6px;
+}
+
+.row{
+    display:flex;
+    gap:8px;
+}
+
+input, select{
+    flex:1;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    font-size:12px;
+    outline:none;
+}
+
+button{
+    padding:10px 12px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    color:white;
+    font-size:12px;
+}
+
+.browse{background:#3b82f6;}
+.green{background:#22c55e;}
+.orange{background:#f59e0b;}
+.red{background:#ef4444;}
+
+textarea{
+    width:100%;
+    height:140px;
+    margin-top:10px;
+    border-radius:10px;
+    padding:10px;
+    font-size:11px;
+    border:none;
+    outline:none;
+    resize:none;
+}
+
+.stats{
+    display:flex;
+    gap:10px;
+    margin:15px 0;
+}
+
+.box{
+    flex:1;
+    text-align:center;
+    background:rgba(255,255,255,0.05);
+    padding:10px;
+    border-radius:10px;
+}
+
+.box b{
+    display:block;
+    font-size:16px;
+}
+
+.buttons{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+}
+
+.buttons button{
+    flex:1;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>UNIVERSAL FILE CONSOLIDATOR</h2>
+
+<!-- Folder -->
+<div class="field">
+
+<label>Select Folder</label>
+
+<div class="row">
+
+<input type="text" id="folderName" readonly placeholder="Choose folder">
+
+<button class="browse"
+onclick="document.getElementById('folderPicker').click()">
+Browse
+</button>
+
+</div>
+
+<input type="file" id="folderPicker" webkitdirectory multiple hidden>
+
+</div>
+
+<!-- Output -->
+<div class="field">
+
+<label>Output File Name</label>
+
+<input type="text" id="outputFile" placeholder="merged">
+
+</div>
+
+<!-- File Type -->
+<div class="field">
+
+<label>File Type</label>
+
+<select id="fileType">
+
+<option value="all">ALL FILES</option>
+
+<option value=".txt">TXT</option>
+<option value=".log">LOG</option>
+<option value=".csv">CSV</option>
+<option value=".json">JSON</option>
+<option value=".xml">XML</option>
+<option value=".md">MARKDOWN</option>
+<option value=".html">HTML</option>
+<option value=".css">CSS</option>
+<option value=".js">JavaScript</option>
+<option value=".ts">TypeScript</option>
+<option value=".php">PHP</option>
+<option value=".py">Python</option>
+<option value=".java">Java</option>
+<option value=".c">C</option>
+<option value=".cpp">C++</option>
+<option value=".env">ENV</option>
+<option value=".yml">YAML</option>
+<option value=".yaml">YAML2</option>
+<option value=".sql">SQL</option>
+<option value=".tsv">TSV</option>
+
+</select>
+
+</div>
+
+<!-- Stats -->
+<div class="stats">
+
+<div class="box">
+<b id="totalFiles">0</b>
+Total
+</div>
+
+<div class="box">
+<b id="matchedFiles">0</b>
+Matched
+</div>
+
+<div class="box">
+<b id="status">Idle</b>
+Status
+</div>
+
+</div>
+
+<!-- Log -->
+<textarea id="logArea" readonly></textarea>
+
+<!-- Buttons -->
+<div class="buttons">
+
+<button class="green" onclick="consolidateFiles()">Consolidate</button>
+<button class="orange" onclick="clearFields()">Clear</button>
+<button class="red" onclick="goBack()">Back</button>
+
+</div>
+
+</div>
+
+<script>
+
+let files = [];
+
+document.getElementById("folderPicker")
+.addEventListener("change",(e)=>{
+
+files = [...e.target.files];
+
+if(files.length === 0) return;
+
+let folder = files[0].webkitRelativePath.split("/")[0];
+
+document.getElementById("folderName").value = folder;
+
+updateStats();
+
+document.getElementById("status").innerText = "Ready";
+
+document.getElementById("logArea").value =
+"Folder Loaded: " + folder;
+
+});
+
+function updateStats(){
+
+let type = document.getElementById("fileType").value;
+
+let matched = 0;
+
+for(let f of files){
+
+let ext = "." + f.name.split(".").pop().toLowerCase();
+
+if(type === "all"){
+    matched++;
+}
+else if(ext === type){
+    matched++;
+}
+
+}
+
+document.getElementById("totalFiles").innerText = files.length;
+document.getElementById("matchedFiles").innerText = matched;
+
+}
+
+document.getElementById("fileType")
+.addEventListener("change", updateStats);
+
+async function consolidateFiles(){
+
+let output = document.getElementById("outputFile").value.trim();
+let type = document.getElementById("fileType").value;
+let log = document.getElementById("logArea");
+
+if(files.length === 0){
+    alert("Select folder");
+    return;
+}
+
+if(output === ""){
+    alert("Enter output name");
+    return;
+}
+
+document.getElementById("status").innerText = "Processing";
+
+let merged = "";
+
+for(let f of files){
+
+let ext = "." + f.name.split(".").pop().toLowerCase();
+
+let allowed = (type === "all") || (ext === type);
+
+if(allowed){
+
+try{
+
+let content = await f.text();
+
+/* ONLY CONTENT */
+merged += content + "\n\n";
+
+log.value += "\nReading: " + f.webkitRelativePath;
+
+}
+catch(err){
+
+log.value += "\nError: " + f.name;
+
+}
+
+}
+
+}
+
+/* DOWNLOAD ANYWHERE */
+const blob = new Blob([merged], {type:"text/plain"});
+
+const a = document.createElement("a");
+a.href = URL.createObjectURL(blob);
+a.download = output + ".txt";
+
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+
+URL.revokeObjectURL(a.href);
+
+document.getElementById("status").innerText = "Done";
+
+log.value += "\n\nDownload complete.";
+
+}
+
+function clearFields(){
+
+files = [];
+
+document.getElementById("folderName").value = "";
+document.getElementById("outputFile").value = "";
+document.getElementById("logArea").value = "";
+
+document.getElementById("totalFiles").innerText = "0";
+document.getElementById("matchedFiles").innerText = "0";
+document.getElementById("status").innerText = "Idle";
+
+}
+
+function goBack(){
+history.back();
+}
+
+</script>
+
+</body>
+</html>
